@@ -4,8 +4,9 @@ import projeto_sacre
 import ssd_gerenc
 import repositorio
 import gestao_ssd
-#import publicacoes
 import publica
+import requests
+
 
 st.set_page_config(layout="wide")
 

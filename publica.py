@@ -44,7 +44,7 @@ def show():
         conn.close()
         return artigos
 
-    # Função para exibir PDF no app
+    # Função para exibir PDF
     def exibir_pdf_no_app(caminho_pdf, altura=1000):
         """Exibe o PDF renderizado na tela, usando a largura máxima do navegador."""
         with open(caminho_pdf, "rb") as pdf_file:
@@ -62,7 +62,7 @@ def show():
             st.warning("Nenhum artigo encontrado no banco de dados.")
             return
 
-        # Dividir a interface em duas colunas
+        # Dividir a interface em colunas
         margem, col1, col2, col3 = st.columns([0.05, 1, 1, 1])  # 1/3 para a tabela, 2/3 para o resumo
 
         with col1:
@@ -89,7 +89,7 @@ def show():
 
             # st.info("Clique em 'Resumo' para ver mais detalhes ou 'Acessar DOI' para abrir o artigo online.")
 
-        # Coluna 2: Exibição do Resumo inglÊs
+        # Coluna 2: Exibição do Resumo inglês
         with col2:
             st.subheader("Abstract")
             artigo_selecionado = st.session_state.get('artigo_selecionado')  # Resgatar o artigo selecionado

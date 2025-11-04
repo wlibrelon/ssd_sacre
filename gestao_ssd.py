@@ -39,7 +39,6 @@ def show():
         precip_max = df_select["Precipitacao"].max()
         precip_min = df_select["Precipitacao"].min()
 
-        
         col2.subheader("Estatística dos dados", divider="gray")
 
         col2.subheader(f"Média: {precip_media:.2f}")
