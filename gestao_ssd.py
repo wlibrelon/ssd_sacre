@@ -5,169 +5,278 @@ import datetime
 import pydeck as pdk
 from streamlit_option_menu import option_menu
 from io import StringIO
+from funcoes_app import exibir_pdf_no_app, conectar_banco, menu_wps
+
+def incluir_wp():
+    """Função para incluir um novo WP"""
+    st.subheader("Incluir Novo WP")
+    
+    with st.form("form_incluir_wp"):
+        wp = st.number_input("Número do WP", min_value=1, step=1)
+        titulo = st.text_input("Título")
+        descricao = st.text_area("Descrição")
+        gerente = st.text_input("Gerente Responsável")
+        colaboradores = st.text_input("Colaboradores")
+        menu = st.text_input("Texto para Menu")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            submitted = st.form_submit_button("💾 Salvar Novo WP")
+        with col2:
+            if st.form_submit_button("❌ Cancelar"):
+                if 'wp_action' in st.session_state:
+                    del st.session_state['wp_action']
+                st.rerun()
+        
+        if submitted:
+            try:
+                conn = conectar_banco()
+                cursor = conn.cursor()
+                
+                # Verificar se WP já existe
+                cursor.execute("SELECT COUNT(*) FROM wps WHERE wp = ?", (wp,))
+                if cursor.fetchone()[0] > 0:
+                    st.error("Este número de WP já existe!")
+                    return
+                
+                # Inserir novo registro
+                cursor.execute(
+                    """INSERT INTO wps (wp, titulo, descricao, gerente, colaboradores, menu)
+                    VALUES (?, ?, ?, ?, ?, ?)""",
+                    (wp, titulo, descricao, gerente, colaboradores, menu)
+                )
+                conn.commit()
+                st.success("✅ WP cadastrado com sucesso!")
+                
+                # Limpar cache e estado
+                st.cache_data.clear()
+                if 'wp_action' in st.session_state:
+                    del st.session_state['wp_action']
+                
+                # Atualizar a página após 1 segundo
+                time.sleep(1)
+                st.rerun()
+                
+            except Exception as e:
+                st.error(f"⛔ Erro ao cadastrar WP: {str(e)}")
+            finally:
+                if conn:
+                    conn.close()
+
+def alterar_wp(wps_df):
+    """Função para alterar um WP existente"""
+    st.subheader("Alterar WP Existente")
+    
+    if wps_df.empty:
+        st.warning("Nenhum WP disponível para edição")
+        return
+    
+    wp_selecionado = st.selectbox(
+        "Selecione o WP para alterar:",
+        options=wps_df['wp'].tolist(),
+        format_func=lambda x: f"WP {x}",
+        key="select_alterar_wp"
+    )
+    
+    # Obter dados atuais
+    dados_atuais = wps_df[wps_df['wp'] == wp_selecionado].iloc[0]
+    
+    with st.form("form_alterar_wp"):
+        # Campos editáveis (wp não pode ser alterado)
+        st.write(f"Editando: WP {wp_selecionado}")
+        novo_titulo = st.text_input("Título", value=dados_atuais['titulo'])
+        nova_descricao = st.text_area("Descrição", value=dados_atuais['descricao'])
+        novo_gerente = st.text_input("Gerente", value=dados_atuais['gerente'])
+        novos_colaboradores = st.text_input("Colaboradores", value=dados_atuais['colaboradores'])
+        novo_menu = st.text_input("Menu", value=dados_atuais['menu'])
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            submitted = st.form_submit_button("💾 Salvar Alterações")
+        with col2:
+            if st.form_submit_button("❌ Cancelar"):
+                if 'wp_action' in st.session_state:
+                    del st.session_state['wp_action']
+                st.rerun()
+        
+        if submitted:
+            try:
+                conn = conectar_banco()
+                cursor = conn.cursor()
+                
+                cursor.execute(
+                    """UPDATE wps SET
+                    titulo = %s,
+                    descricao = %s,
+                    gerente = %s,
+                    colaboradores = %s,
+                    menu = %s
+                    WHERE wp = %s""",
+                    (novo_titulo, nova_descricao, novo_gerente,
+                     novos_colaboradores, novo_menu, wp_selecionado)
+                )
+                conn.commit()
+                st.success("✅ WP atualizado com sucesso!")
+                
+                # Limpar cache e estado
+                st.cache_data.clear()
+                if 'wp_action' in st.session_state:
+                    del st.session_state['wp_action']
+                
+                # Atualizar a página
+                time.sleep(1)
+                st.rerun()
+                
+            except Exception as e:
+                st.error(f"⛔ Erro ao atualizar WP: {str(e)}")
+                st.error("Consulta executada:")
+                st.code(f"""UPDATE wps SET
+                    titulo = '{novo_titulo}',
+                    descricao = '{nova_descricao}',
+                    gerente = '{novo_gerente}',
+                    colaboradores = '{novos_colaboradores}',
+                    menu = '{novo_menu}'
+                    WHERE wp = {wp_selecionado}""")
+            finally:
+                if conn:
+                    conn.close()                    
 
 def show():
+    # Sidebar com login
     with st.sidebar:
-        st.sidebar.title("Gerenciamento SSD")
-        uploaded_file = st.file_uploader("Selecione o arquivo para processamento")
-        if uploaded_file is not None:
-            bytes_data = uploaded_file.getvalue()
-            stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
-            string_data = stringio.read()
-            dataframe = pd.read_csv(uploaded_file)
+        st.title("Gerenciamento SSD")
+        st.subheader("Manutenção de Dados")
+        btn_wp = st.button("Work Packages")
 
-            meses = st.sidebar.multiselect(
-                "Selecione os meses", options=dataframe["Mes"].unique(), default=dataframe["Mes"].unique(),
-            )
-            anos = st.sidebar.multiselect(
-                "Selecione os anos", options=dataframe["Ano"].unique(), default=dataframe["Ano"].unique(),
-            )
+    # Layout de colunas
+    col1, col2 = st.columns([10, 10]) 
 
-            df_select = dataframe.query(
-                "Mes ==@meses & Ano==@anos"
-            )
-        btn_map = st.button("Exibir Poços")
-
-        btn_Precip = st.button("Dados de Precipitação")
-
-    if uploaded_file is not None:
-        col1, col2 = st.columns([2, 2])
-
-        col1.subheader("Precipitação na bacia do rio Manso", divider="gray")
-        col1.dataframe(df_select)
-        precip_media = df_select["Precipitacao"].mean()
-        precip_max = df_select["Precipitacao"].max()
-        precip_min = df_select["Precipitacao"].min()
-
-        col2.subheader("Estatística dos dados", divider="gray")
-
-        col2.subheader(f"Média: {precip_media:.2f}")
-
-        col2.subheader(f"Precipitação Máxima: {precip_max:.2f}")
-
-        col2.subheader(f"Precipitação Mínima: {precip_min:.2f}")
-
-        st.line_chart(df_select, x="Data", y="Precipitacao",x_label="Período", y_label="Precipitação")
-
-
-    if btn_map:
-        # uploaded_file = st.file_uploader("Selecione o arquivo para processamento")
-        # if uploaded_file is not None:
-        #     bytes_data = uploaded_file.getvalue()
-        #     stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
-        #     string_data = stringio.read()
-        #     dataframe = pd.read_csv(uploaded_file)
-
-        # chart_data = pd.DataFrame(
-        #     np.random.randn(100, 2) / [50, 50] + [-22.3, -49.07],
-        #     columns=["lat", "lon"],
-        #      )
+    with col1:
+        st.subheader("Work Packages")
         
-        chart_data = pd.read_csv('dados/pps_bauru.csv')
-
-        st.pydeck_chart(
-            pdk.Deck(
-                map_style=None,
-                initial_view_state=pdk.ViewState(
-                    latitude=-22.3,
-                    longitude=-49.07,
-                    zoom=11,
-                    pitch=1,
-                ),
-                layers=[
-                    pdk.Layer(
-                        "ContourLayer", # ContourLayer GridLayer HeatmapLayer HexagonLayer ScreenGridLayer
-                        data=chart_data,
-                        get_position="[lon, lat]",
-                        radius=100,
-                        elevation_scale=1,
-                        elevation_range=[0, 10],
-                        pickable=True,
-                        extruded=True,
-                    ),
-                    pdk.Layer(
-                        "ScatterplotLayer",  #ArcLayer BitmapLayer ColumnLayer GeoJsonLayer GridCellLayer IconLayer LineLayer PathLayer PointCloudLayer PolygonLayer 
-                                            #ScatterplotLayer SolidPolygonLayer TextLayer
-
-                        data=chart_data,
-                        get_position="[lon, lat]",
-                        get_color="[200, 30, 0, 160]",
-                        get_radius=30,
-                    ),
-                ],
-            )
-        )
-        st.dataframe(chart_data)
-
-        import geopandas as gpd
-        gdf = gpd.read_file('dados/Bacia_Bauru.json')
-
-        # Calcula o centro do seu polígono
-        bounds = gdf.total_bounds  # [minx, miny, maxx, maxy]
-        center_lat = (bounds[1] + bounds[3]) / 2
-        center_lon = (bounds[0] + bounds[2]) / 2
-
-        # Estime o zoom ideal (ajuste conforme necessário)
-        # Quanto maior a área (diferença max-min), menor o zoom
-        extent = max(bounds[2]-bounds[0], bounds[3]-bounds[1])
-        # if extent < 1:
-        #     zoom = 10
-        # elif extent < 5:
-        #     zoom = 8
-        # elif extent < 10:
-        #     zoom = 7
-        # elif extent < 50:
-        #     zoom = 6
-        # else:
-        #     zoom = 10
-
-        layer = pdk.Layer(
-            "GeoJsonLayer",
-            data=gdf.__geo_interface__,
-            opacity=0.5,
-            stroked=True,
-            filled=True,
-            get_fill_color=[180, 255, 166, 50],
-            get_line_color=[0, 0, 0, 200],
-            pickable=True,
-        )
-        view_state = pdk.ViewState(
-            latitude=center_lat,
-            longitude=center_lon,
-            zoom=10
-        )
-        deck = pdk.Deck(layers=[layer], initial_view_state=view_state)
-        st.pydeck_chart(deck)
-
-        # # Read GeoJSON data into a GeoDataFrame
-        # gdf = gpd.read_file('dados/geojs-35-mun.json')
+        # Carregar dados da tabela WPs
+        @st.cache_data
+        def load_wps():
+            conn = conectar_banco()
+            query = "SELECT wp, titulo, descricao, gerente, colaboradores, menu FROM wps ORDER BY wp"
+            df = pd.read_sql(query, conn)
+            conn.close()
+            return df
         
-        # # Convert the GeoDataFrame to a DataFrame
-        # df = pd.DataFrame(gdf)
-        # st.dataframe(df)
-        # # Create a map with the GeoJSON data
-        #st.map(gdf)
+        df_wps = load_wps()
+        
+        # Exibir tabela com paginação
+        st.dataframe(df_wps, height=400, hide_index=True)
 
+        # Botões de gerenciamento
+        st.write("")  # Espaçamento
+        btn_container = st.container()
+        with btn_container:
+            col_btn1, col_btn2, col_btn3 = st.columns(3)
+            with col_btn1:
+                if st.button("➕ Incluir", use_container_width=True):
+                    st.session_state['wp_action'] = 'incluir'
+            with col_btn2:
+                if st.button("✏️ Alterar", use_container_width=True):
+                    st.session_state['wp_action'] = 'alterar'
+            with col_btn3:
+                if st.button("❌ Excluir", use_container_width=True):
+                    st.session_state['wp_action'] = 'excluir'
 
-    if btn_Precip:
-        dataframe = pd.read_csv('dados/Precip_Bacia_Manso_Estacoes.csv')
-
-        estacoes = st.sidebar.multiselect(
-            "Selecione as estações", options=dataframe["Estacao"].unique(), default=dataframe["Estacao"].unique(),
-        )
-        df_select = dataframe.query(
-            "Estacao ==@estacoes"
-        )
-        st.line_chart(df_select, x="Data", y="Precipitacao",x_label="Período", y_label="Precipitação", height=1500)
-        # chart = alt.Chart(dfselect).mark_line().encode(
-        #     x='Data:T',
-        #     y='Precipitacao:Q'
-        #     ).properties(
-        #         width='container',     # para ocupar toda a largura do container
-        #         height=600             # aqui você define a altura desejada
-        #     )
-        # st.altair_chart(chart, use_container_width=True)
-
-        # st.line_chart(df_select.set_index("Data")["Precipitacao"])
-        st.dataframe(df_select, height=300, head=5)
+        # Lógica para cada ação (será exibida na coluna 2)
+        if 'wp_action' in st.session_state:
+            if st.session_state['wp_action'] == 'incluir':
+                with col2:
+                    st.subheader("Incluir Novo WP")
+                    with st.form("form_incluir"):
+                        wp = st.number_input("WP (Número)", min_value=1)
+                        titulo = st.text_input("Título")
+                        descricao = st.text_area("Descrição")
+                        gerente = st.text_input("Gerente Responsável")
+                        colaboradores = st.text_input("Colaboradores")
+                        menu = st.text_input("Texto do Menu")
+                        
+                        if st.form_submit_button("Salvar"):
+                            st.write("Salvando novo WP...")
+                            try:
+                                # incluir_wp(wp, titulo, descricao, gerente, colaboradores, menu)
+                                conn = conectar_banco()
+                                cursor = conn.cursor()
+                                cursor.execute(
+                                    "INSERT INTO wps (wp, titulo, descricao, gerente, colaboradores, menu) " \
+                                    "VALUES (%s, %s, %s, %s, %s, %s)",
+                                    (wp, titulo, descricao, gerente, colaboradores, menu)
+                                )
+                                conn.commit()
+                                st.success("WP cadastrado com sucesso!")
+                                st.cache_data.clear()  # Limpa cache para recarregar dados
+                            except Exception as e:
+                                st.error(f"Erro ao cadastrar: {e}")
+                            finally:
+                                del st.session_state['wp_action']
+            
+            elif st.session_state['wp_action'] == 'alterar':
+                with col2:
+                    st.subheader("Alterar WP")
+                    wp_selecionado = st.selectbox(
+                        "Selecione o WP para alterar.",
+                        options=df_wps['wp'].tolist()
+                    )
+                    dados_wp = df_wps[df_wps['wp'] == wp_selecionado].iloc[0]
+                    
+                    with st.form("form_alterar"):
+                        novo_titulo = st.text_input("Título", value=dados_wp['titulo'])
+                        nova_descricao = st.text_area("Descrição", value=dados_wp['descricao'])
+                        novo_gerente = st.text_input("Gerente Responsável", value=dados_wp['gerente'])
+                        novos_colaboradores = st.text_input("Colaboradores", value=dados_wp['colaboradores'])
+                        novo_menu = st.text_input("Texto do Menu", value=dados_wp['menu'])
+                        
+                        if st.form_submit_button("Atualizar"):
+                            try:
+                                st.write("atualizando WP...")
+                                conn = conectar_banco()
+                                cursor = conn.cursor()
+                                cursor.execute(
+                                    """UPDATE wps SET 
+                                    titulo = %s, descricao = %s, gerente = %s, 
+                                    colaboradores = %s, menu = %s
+                                    WHERE wp = %s""",
+                                    (novo_titulo, nova_descricao, novo_gerente, 
+                                     novos_colaboradores, novo_menu, wp_selecionado)
+                                )
+                                conn.commit()
+                                st.success("WP atualizado com sucesso!")
+                                st.cache_data.clear()
+                            except Exception as e:
+                                st.error(f"Erro ao atualizar: {e}")
+                            finally:
+                                if conn:
+                                    conn.close()
+                                del st.session_state['wp_action']
+            
+            elif st.session_state['wp_action'] == 'excluir':
+                with col2:
+                    st.subheader("Excluir WP")
+                    wp_selecionado = st.selectbox(
+                        "Selecione o WP para excluir",
+                        options=df_wps['wp'].tolist()
+                    )
+                    
+                    if st.button("Confirmar Exclusão"):
+                        try:
+                            conn = conectar_banco()
+                            cursor = conn.cursor()
+                            cursor.execute(
+                                "DELETE FROM wps WHERE wp = %s",
+                                (wp_selecionado,)
+                            )
+                            conn.commit()
+                            st.success("WP excluído com sucesso!")
+                            st.cache_data.clear()
+                        except Exception as e:
+                            st.error(f"Erro ao excluir: {e}")
+                        finally:
+                            if conn:
+                                conn.close()
+                            del st.session_state['wp_action']
 

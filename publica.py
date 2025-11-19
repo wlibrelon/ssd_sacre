@@ -3,29 +3,15 @@ import streamlit as st
 import os
 import base64
 from PyPDF2 import PdfReader
+from funcoes_app import exibir_pdf_no_app, conectar_banco
 
 def show():
     # Configurações do banco de dados
-    MYSQL_HOST = "localhost"
-    MYSQL_USER = "root"
-    MYSQL_PASSWORD = "dbssd@#"
-    MYSQL_DB = "db_ssd"
     PASTA_PDFS = "artigos"  
 
     # Garantir que a pasta de PDFs exista
     if not os.path.exists(PASTA_PDFS):
         os.makedirs(PASTA_PDFS)
-
-
-    # Função para conectar ao banco de dados
-    def conectar_banco():
-        conn = mysql.connector.connect(
-            host=MYSQL_HOST,
-            user=MYSQL_USER,
-            password=MYSQL_PASSWORD,
-            database=MYSQL_DB
-        )
-        return conn
 
     # Função para inserir um artigo no banco
     def inserir_artigo(titulo, resumo, abstract, doi, pasta_pdf):
@@ -44,17 +30,7 @@ def show():
         conn.close()
         return artigos
 
-    # Função para exibir PDF
-    def exibir_pdf_no_app(caminho_pdf, altura=1000):
-        """Exibe o PDF renderizado na tela, usando a largura máxima do navegador."""
-        with open(caminho_pdf, "rb") as pdf_file:
-            base64_pdf = base64.b64encode(pdf_file.read()).decode("utf-8")
-            pdf_display = f"""
-            <iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="{altura}" type="application/pdf"></iframe>
-            """
-            st.markdown(pdf_display, unsafe_allow_html=True)
 
-    # Tabela de artigos com resumo e botão para exibir PDF
     def exibir_tabela_com_resumo_e_pdf():
         artigos = buscar_artigos()  # Buscar do banco os dados dos artigos
 
@@ -70,7 +46,7 @@ def show():
             for idx, artigo in enumerate(artigos):
                 st.write(f"**{artigo['id_artigo']} - {artigo['titulo']}**")
 
-                col_res, col_doi = st.columns([1,4])
+                col_res, col_doi = st.columns([2,4])
 
                 with col_res:
                     # Botão para visualizar o resumo
@@ -220,12 +196,12 @@ def show():
             if nome:
                 conn = conectar_banco()
                 cursor = conn.cursor()
-                cursor.execute("INSERT INTO autores (nome, link_internet) VALUES (%s, %s)", (nome, link_internet))
+                cursor.execute("INSERT INTO pesquisadores (nome, link_internet) VALUES (%s, %s)", (nome, link_internet))
                 conn.commit()
                 conn.close()
-                st.success("Autor inserido com sucesso!")
+                st.success("Pesquisador inserido com sucesso!")
             else:
-                st.error("O nome do autor é obrigatório.")
+                st.error("O nome do pesquisador é obrigatório.")
 
     # Relacionar Artigos e Autores
     elif menu == "Relacionar Artigos e Autores":
@@ -238,7 +214,7 @@ def show():
         artigos = cursor.fetchall()
 
         # Selecionar Autor
-        cursor.execute("SELECT id_autor, nome FROM autores")
+        cursor.execute("SELECT id_pesquisador, nome FROM pesquisadores")
         autores = cursor.fetchall()
         conn.close()
 

@@ -2,10 +2,10 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 import projeto_sacre
 import ssd_gerenc
-import repositorio
-import gestao_ssd
+import result_wps
 import publica
-import requests
+import gestao_ssd
+import gestao_ssd2
 
 ### SACRE Application
 st.set_page_config(layout="wide")
@@ -26,15 +26,18 @@ st.markdown("""
 col1, col2 = st.columns([2, 10]) 
 
 with col1:
-    st.image("images/logo_sacre.png", width=300)
+    st.image("images/logo_sacre1.png", width=300)
 
 with col2:
-    st.write("")
+    st.markdown("""
+    <style>  h1 {text-align: center; font-size: 28px !important;}</style>
+    """, unsafe_allow_html=True)
 
+    st.markdown("<h1>Soluções Integradas de Água para Cidades Resilientes</h1>",unsafe_allow_html=True)
 
 selected = option_menu(
     menu_title=None, 
-    options=["SACRE", "SSD", "Repositório","Publicação", "Gestão SSD"],
+    options=["SACRE", "SSD", "Resultados","Publicação", "Gestão SSD"],
     orientation="horizontal",
     styles={
         "container": {"padding": "0!important", "background-color": "#0CBFDD"},
@@ -60,9 +63,9 @@ if selected == "SACRE":
     projeto_sacre.show()
 elif selected == "SSD":
     ssd_gerenc.show()
-elif selected == "Repositório":
-    repositorio.show()
+elif selected == "Resultados":
+    result_wps.show()
 elif selected == "Publicação":
      publica.show()
 elif selected == "Gestão SSD":
-    gestao_ssd.show()
+    gestao_ssd2.show()
