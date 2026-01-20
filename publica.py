@@ -6,14 +6,11 @@ from PyPDF2 import PdfReader
 from funcoes_app import exibir_pdf_no_app, conectar_banco
 
 def show():
-    # Configurações do banco de dados
     PASTA_PDFS = "artigos"  
 
-    # Garantir que a pasta de PDFs exista
     if not os.path.exists(PASTA_PDFS):
         os.makedirs(PASTA_PDFS)
 
-    # Função para inserir um artigo no banco
     def inserir_artigo(titulo, resumo, abstract, doi, pasta_pdf):
         conn = conectar_banco()
         cursor = conn.cursor()
@@ -21,25 +18,22 @@ def show():
         conn.commit()
         conn.close()
 
-    # Função para buscar artigos
     def buscar_artigos():
         conn = conectar_banco()
-        cursor = conn.cursor(dictionary=True)  # Retorna os resultados como dicionários
+        cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT id_artigo, titulo, resumo, abstract, doi,  pasta_pdf FROM artigos")
         artigos = cursor.fetchall()
         conn.close()
         return artigos
 
-
     def exibir_tabela_com_resumo_e_pdf():
-        artigos = buscar_artigos()  # Buscar do banco os dados dos artigos
+        artigos = buscar_artigos()
 
         if not artigos:
             st.warning("Nenhum artigo encontrado no banco de dados.")
             return
 
-        # Dividir a interface em colunas
-        margem, col1, col2, col3 = st.columns([0.05, 1, 1, 1])  # 1/3 para a tabela, 2/3 para o resumo
+        margem, col1, col2, col3 = st.columns([0.05, 1, 1, 1])
 
         with col1:
             st.subheader("Artigos Publicados")
@@ -49,11 +43,9 @@ def show():
                 col_res, col_doi = st.columns([2,4])
 
                 with col_res:
-                    # Botão para visualizar o resumo
                     if st.button("Resumo", key=f"resumo_{artigo['id_artigo']}"):
                         st.session_state['artigo_selecionado'] = artigo
                 with col_doi:
-                    # Link clicável para o DOI
                     if artigo.get("doi"):
                         st.markdown(
                             f"""<a href="{artigo['doi']}" target="_blank" style="color: #1f77b4; text-decoration: none;">
@@ -63,29 +55,24 @@ def show():
                 if idx < len(artigos) - 1:
                     st.markdown("""<hr style="margin-top: 3px; margin-bottom: 2px;">""",unsafe_allow_html=True)
 
-            # st.info("Clique em 'Resumo' para ver mais detalhes ou 'Acessar DOI' para abrir o artigo online.")
-
         # Coluna 2: Exibição do Resumo inglês
         with col2:
             st.subheader("Abstract")
-            artigo_selecionado = st.session_state.get('artigo_selecionado')  # Resgatar o artigo selecionado
+            artigo_selecionado = st.session_state.get('artigo_selecionado')
 
             if artigo_selecionado:
-                # Exibição do Resumo
                 st.text_area("", artigo_selecionado["abstract"], height=400, disabled=True)
 
         # Coluna 3: Exibição do Resumo portuguÊs
         with col3:
             st.subheader("Resumo")
-            artigo_selecionado = st.session_state.get('artigo_selecionado')  # Resgatar o artigo selecionado
+            artigo_selecionado = st.session_state.get('artigo_selecionado')
 
             if artigo_selecionado:
-                # Exibição do Resumo
                 st.text_area("", artigo_selecionado["resumo"], height=400, disabled=True)
 
         st.markdown("""<hr style="margin-top: 3px; margin-bottom: 2px;">""",unsafe_allow_html=True)
 
-        # Formulário de Edição abaixo das colunas
         if st.session_state.get('modo_edicao', False) and artigo_selecionado:
             st.markdown("---")
             st.subheader("Editar Artigo Selecionado")
@@ -109,12 +96,8 @@ def show():
                 st.session_state['modo_edicao'] = False
 
 
-    # Streamlit - Interface
     st.sidebar.title("Gerenciamento de Artigos e Autores")
-    # Define "Artigos Publicados" como a seção inicial do menu
-    # menu = st.sidebar.selectbox("", ["Artigos Publicados", "Inserir Artigos", "Inserir Autores", "Relacionar Artigos e Autores"], index=0)
 
-    # Inicializar estado da sessão para controle do menu
     if 'menu' not in st.session_state:
         st.session_state['menu'] = 'Artigos Publicados'
     if 'modo_edicao' not in st.session_state:
@@ -125,7 +108,7 @@ def show():
 
     if st.sidebar.button("Artigos Publicados"):
         st.session_state['menu'] = "Artigos Publicados"
-        st.session_state['modo_edicao'] = False  # resetar edição
+        st.session_state['modo_edicao'] = False
 
     if st.sidebar.button("Inserir Artigos"):
         st.session_state['menu'] = "Inserir Artigos"
@@ -142,10 +125,9 @@ def show():
     # Se um artigo estiver selecionado, mostrar opções adicionais
     if st.session_state['artigo_selecionado']:
         st.sidebar.markdown("""<hr style="margin-top: 3px; margin-bottom: 2px;">""",unsafe_allow_html=True)
-        # st.sidebar.write(f"**Selecionado:** {st.session_state['artigo_selecionado']['titulo']}")
         
         if st.sidebar.button("Exibir Artigo"):
-            artigo_selecionado = st.session_state.get('artigo_selecionado')  # Resgatar o artigo selecionado
+            artigo_selecionado = st.session_state.get('artigo_selecionado')
             st.session_state['menu'] = "Exibir Artigo"
             caminho_pdf = artigo_selecionado["pasta_pdf"]
             st.subheader(f"{artigo_selecionado['titulo']}")
@@ -161,10 +143,8 @@ def show():
 ################################
     # Artigos Publicados (exibe por padrão ao abrir o app)
     if menu == "Artigos Publicados":
-        # st.header("Visualização de Artigos")
         exibir_tabela_com_resumo_e_pdf()
 
-    # Inserir Artigos
     elif menu == "Inserir Artigos":
         st.header("Inserir um Novo Artigo")
         titulo = st.text_input("Título do Artigo")
@@ -175,18 +155,15 @@ def show():
 
         if st.button("Salvar Artigo"):
             if titulo and arquivo_pdf:
-                # Salvar o arquivo PDF na pasta 'artigos'
                 caminho_pdf = os.path.join(PASTA_PDFS, arquivo_pdf.name)
                 with open(caminho_pdf, "wb") as f:
                     f.write(arquivo_pdf.read())
                 
-                # Inserir no banco o título, resumo, abstract e o caminho do PDF
                 inserir_artigo(titulo, resumo, abstract, doi, caminho_pdf)
                 st.success("Artigo inserido com sucesso!")
             else:
                 st.error("Título e o arquivo PDF são obrigatórios.")
 
-    # Inserir Autores
     elif menu == "Inserir Autores":
         st.header("Inserir um Novo Autor")
         nome = st.text_input("Nome do Autor")
@@ -203,17 +180,14 @@ def show():
             else:
                 st.error("O nome do pesquisador é obrigatório.")
 
-    # Relacionar Artigos e Autores
     elif menu == "Relacionar Artigos e Autores":
         st.header("Relacionar Artigo a Autor")
 
-        # Selecionar Artigo
         conn = conectar_banco()
         cursor = conn.cursor()
         cursor.execute("SELECT id_artigo, titulo FROM artigos")
         artigos = cursor.fetchall()
 
-        # Selecionar Autor
         cursor.execute("SELECT id_pesquisador, nome FROM pesquisadores")
         autores = cursor.fetchall()
         conn.close()

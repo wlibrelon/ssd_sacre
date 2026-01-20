@@ -1,6 +1,6 @@
 CREATE TABLE `artigos` (
   `Id_Artigo` integer PRIMARY KEY,
-  `id_projeto` intger,
+  `id_projeto` integer,
   `Titulo` varchar(255),
   `Resumo` text,
   `Abstract` text,
@@ -39,7 +39,62 @@ CREATE TABLE `projetos_wps` (
   `titulo` text,
   `id_autor` integer,
   `resumo` text,
-  `Objetivos` text
+  `objetivos` text
+);
+
+CREATE TABLE `arq_resultados` (
+  `id_arq_res` integer PRIMARY KEY,
+  `id_projeto` integer,
+  `descricao` text,
+  `nome_arq` varchar(30)
+);
+
+CREATE TABLE `resultados_quim` (
+  `id_resultado` int AUTO_INCREMENT PRIMARY KEY,
+  `id_ponto` integer,
+  `id_Campanha` integer,
+  `id_WP` integer,
+  `tipo_resultado` varchar(30),
+  `nome_amostra` varchar(30),
+  `data` date,
+  `parametro` varchar(30),
+  `simbolo` varchar(20),
+  `unidade` varchar(10),
+  `flag` varchar(1),
+  `resultado` float,
+  `erro` float,
+  `lab` varchar(30),
+  `obs` text,
+  `profund_inicial_solo` float,
+  `profund_final_solo` float
+);
+
+
+
+CREATE TABLE `Campanhas` (
+  `id_Campanha` integer AUTO_INCREMENT PRIMARY KEY,
+  `id_WP` integer,
+  `cod_Campanha` varchar(20),
+  `data_inicio` date,
+  `data_fim` date,
+  `tipo_Campanha` varchar(50),
+  `Obs` text
+);
+
+CREATE TABLE `pontos_monitorados` (
+  `id_ponto` integer AUTO_INCREMENT PRIMARY KEY ,
+  `cod_ponto` varchar(20),
+  `id_WP` integer,
+  `tipo_amostra` varchar(30),
+  `coord_x` float,
+  `coord_y` float,
+  `coord_z` float,
+  `latitude` decimal(18,15),
+  `longitude` decimal(18,15),
+  `profundidade` float,
+  `data_instalacao` varchar(30),
+  `tipo_estacao` varchar(30),
+  `obs` text
 );
 
 CREATE TABLE `tb_acoes` (
@@ -73,6 +128,14 @@ ALTER TABLE `colaboradores` ADD FOREIGN KEY (`id_autor`) REFERENCES `pesquisador
 ALTER TABLE `projetos_wps` ADD FOREIGN KEY (`id_wp`) REFERENCES `wps` (`id_wp`);
 
 ALTER TABLE `projetos_wps` ADD FOREIGN KEY (`id_autor`) REFERENCES `pesquisadores` (`id_pesquisador`);
+
+ALTER TABLE `arq_resultados` ADD FOREIGN KEY (`id_projeto`) REFERENCES `projetos_wps` (`id_projeto`);
+
+ALTER TABLE `resultados_quim` ADD FOREIGN KEY (`id_WP`) REFERENCES `wps` (`wp`);
+
+ALTER TABLE `resultados_quim` ADD FOREIGN KEY (`id_Campanha`) REFERENCES `Campanha` (`id_Campanha`);
+
+ALTER TABLE `resultados_quim` ADD FOREIGN KEY (`id_ponto`) REFERENCES `pontos_monitorados` (`id_Ponto`);
 
 ALTER TABLE `tb_mananciais` ADD FOREIGN KEY (`id_manancial`) REFERENCES `tb_ativ_mananciais` (`id_manancial`);
 

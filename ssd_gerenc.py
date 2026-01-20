@@ -54,9 +54,7 @@ def show():
                 taxa_acel = st.slider("Taxa de Crescimento - Acelerada (% ao ano)", min_value=0.0, max_value=1.0, value=0.02, step=0.02,format="%.4f",help="Defina a taxa anual de crescimento populacional no cenário acelerado (ex. 2%)")
                 cons_hab = st.number_input("Consumo Médio por Habitante (m³/dia)",value=0.2153, step=0.01, format="%.4f",help="Insira o consumo médio diário por habitante (ex. 0.2153 m³/dia)")
 
-        # if run_optimization:
-        #     run_otimiza_formB
-            
+           
         with aba2:
             with st.expander("Ações"):
                 st.subheader("Produção de água", divider="gray")
