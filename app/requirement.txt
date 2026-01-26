@@ -1,0 +1,13 @@
+streamlit==1.30.0
+pandas
+numpy 
+datetime
+pydeck
+PyPDF2
+geopandas
+folium
+plotly.express
+base64
+mysql.connector
+datetime
+csv
