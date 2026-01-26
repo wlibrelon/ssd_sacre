@@ -1,9 +1,7 @@
 # Usa a imagem oficial do Python 3.11 (versão slim para ser mais leve)
-
 FROM python:3.11-slim
  
 # Define o diretório de trabalho dentro do container
-
 WORKDIR /app
  
 # Instala dependências do sistema necessárias para algumas bibliotecas Python

@@ -1,0 +1,24 @@
+# docker-compose.yml
+version: '3.8'
+ 
+services:
+  sacre-app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: sacre.app
+
+    restart: unless-stopped
+
+    ports:
+      - "8501:8501"
+
+    environment:
+      - PYTHONUNBUFFERED=1
+
+    # Limite de recursos para estabilidade do servidor
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+ 
