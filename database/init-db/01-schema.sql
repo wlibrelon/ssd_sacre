@@ -1,10 +1,10 @@
 CREATE TABLE `artigos` (
-  `Id_Artigo` integer PRIMARY KEY,
+  `id_Artigo` integer PRIMARY KEY,
   `id_projeto` integer,
-  `Titulo` varchar(255),
-  `Resumo` text,
-  `Abstract` text,
-  `Pasta_PDF` varchar(255)
+  `titulo` varchar(255),
+  `resumo` text,
+  `abstract` text,
+  `pasta_pdf` varchar(255)
 );
 
 CREATE TABLE `pesquisadores` (
@@ -25,7 +25,7 @@ CREATE TABLE `wps` (
   `titulo` text,
   `descricao` text,
   `id_gerente` integer,
-  `id_colaboradores` intger
+  `id_colaboradores` integer
 );
 
 CREATE TABLE `colaboradores` (
@@ -113,7 +113,7 @@ CREATE TABLE `tb_ativ_mananciais` (
   `id_manancial` integer
 );
 
-ALTER TABLE `artigos` ADD FOREIGN KEY (`Id_Artigo`) REFERENCES `artigos_autores` (`id_artigo`);
+ALTER TABLE `artigos` ADD FOREIGN KEY (`id_Artigo`) REFERENCES `artigos_autores` (`id_artigo`);
 
 ALTER TABLE `pesquisadores` ADD FOREIGN KEY (`id_pesquisador`) REFERENCES `artigos_autores` (`id_autor`);
 

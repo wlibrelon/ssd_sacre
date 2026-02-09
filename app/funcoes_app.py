@@ -31,7 +31,7 @@ def conectar_banco():
         host="localhost",
         user="root",
         password="dbssd@#",
-        database="db_ssd"
+        database="ssd_db"
     )
     return conn
 
