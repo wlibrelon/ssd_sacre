@@ -10,7 +10,7 @@ st.set_page_config(layout="wide")
 
 # Estilo e ajustes gerais
 st.markdown("""
-    <style>
+    <style>sou  
         .block-container { padding-top: 1.5rem; padding-left: 0rem; }
         [data-testid="stSidebar"] {background-color: #D3ECF0;}
     </style>

@@ -2,7 +2,7 @@ import mysql.connector
 import streamlit as st
 import os
 import base64
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 from funcoes_app import exibir_pdf_no_app, conectar_banco
 
 

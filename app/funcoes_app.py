@@ -27,11 +27,16 @@ def exibir_imagem_no_app(caminho_imagem, largura="auto"):
 # Função para conectar ao banco de dados
 def conectar_banco():
     # Configurações do banco de dados
+    host = os.environ.get("DB_HOST", "localhost")
+    user = os.environ.get("DB_USER", "root")
+    password = os.environ.get("DB_PASSWORD", "dbssd@#")
+    database = os.environ.get("DB_NAME", "ssd_db")
+
     conn = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="dbssd@#",
-        database="ssd_db"
+        host=host,
+        user=user,
+        password=password,
+        database=database
     )
     return conn
 
