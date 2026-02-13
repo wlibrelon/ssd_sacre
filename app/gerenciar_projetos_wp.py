@@ -512,8 +512,6 @@ def excluir_resultado(id_projeto, resultados_df):
     )
     
     resultado = resultados_df[resultados_df["id_arq_res"] == resultado_selecionado].iloc[0]
-
-    st.warning("⚠️ Esta ação é irreversível.")
     
     if st.button("Confirmar Exclusão", key="btn_confirmar_excluir_resultado"):
         try:

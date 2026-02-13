@@ -1,142 +1,143 @@
-CREATE TABLE `artigos` (
-  `id_Artigo` integer PRIMARY KEY,
-  `id_projeto` integer,
-  `titulo` varchar(255),
-  `resumo` text,
-  `abstract` text,
-  `pasta_pdf` varchar(255)
-);
+-- CREATE DATABASE ssd_db
+-- CHARACTER SET utf8mb4
+-- COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE `pesquisadores` (
-  `id_pesquisador` integer PRIMARY KEY,
-  `nome` varchar(50),
-  `link_internet` varchar(255)
-);
-
-CREATE TABLE `artigos_autores` (
-  `id_artigo_autor` integer PRIMARY KEY,
-  `id_artigo` integer,
-  `id_autor` integer
-);
+USE ssd_db;
 
 CREATE TABLE `wps` (
-  `id_wp` integer PRIMARY KEY,
-  `wp` integer,
-  `titulo` text,
-  `descricao` text,
-  `id_gerente` integer,
-  `id_colaboradores` integer
-);
-
-CREATE TABLE `colaboradores` (
-  `id_colaboradores` integer PRIMARY KEY,
-  `id_autor` integer
-);
+  `id_wp` INTEGER AUTO_INCREMENT PRIMARY KEY,
+  `wp` INTEGER,
+  `titulo` TEXT,
+  `descricao` TEXT,
+  `menu` varchar(20),
+  `id_gerente` INTEGER
+) ENGINE=InnoDB;
 
 CREATE TABLE `projetos_wps` (
-  `id_projeto` integer PRIMARY KEY,
-  `id_wp` integer,
-  `titulo` text,
-  `id_autor` integer,
-  `resumo` text,
-  `objetivos` text
-);
+  `id_projeto`  INTEGER AUTO_INCREMENT PRIMARY KEY,
+  `id_wp` INTEGER,
+  `titulo` TEXT,
+  `id_autor` INTEGER,
+  `resumo` TEXT,
+  `objetivos` TEXT,
+  INDEX `idx_id_wp` (`id_wp`) 
+) ENGINE=InnoDB;
+
+CREATE TABLE `colaboradores` (
+  `id_colaborador` INTEGER AUTO_INCREMENT PRIMARY KEY,
+  `nome` VARCHAR(50),
+  `link_internet` VARCHAR(255),
+  `formacao` VARCHAR(100)
+) ENGINE=InnoDB;
+
+CREATE TABLE `lista_colab` (
+  `id_lista_colab`  INTEGER AUTO_INCREMENT PRIMARY KEY,
+  `id_colaborador` INTEGER,
+  `id_wp` INTEGER,
+  INDEX `idx_id_colaborador` (`id_colaborador`),
+  INDEX `idx_id_wp` (`id_wp`)
+) ENGINE=InnoDB;
 
 CREATE TABLE `arq_resultados` (
-  `id_arq_res` integer PRIMARY KEY,
-  `id_projeto` integer,
-  `descricao` text,
-  `nome_arq` varchar(30)
-);
+  `id_arq_res`  INTEGER AUTO_INCREMENT PRIMARY KEY,
+  `id_projeto` INTEGER,
+  `descricao` TEXT,
+  `nome_arq` VARCHAR(30),
+  INDEX `idx_id_projeto` (`id_projeto`)  
+) ENGINE=InnoDB;
 
-CREATE TABLE `resultados_quim` (
-  `id_resultado` int AUTO_INCREMENT PRIMARY KEY,
-  `id_ponto` integer,
-  `id_Campanha` integer,
-  `id_WP` integer,
-  `tipo_resultado` varchar(30),
-  `nome_amostra` varchar(30),
-  `data` date,
-  `parametro` varchar(30),
-  `simbolo` varchar(20),
-  `unidade` varchar(10),
-  `flag` varchar(1),
-  `resultado` float,
-  `erro` float,
-  `lab` varchar(30),
-  `obs` text,
-  `profund_inicial_solo` float,
-  `profund_final_solo` float
-);
+CREATE TABLE `artigos` (
+  `id_Artigo`  INTEGER AUTO_INCREMENT PRIMARY KEY,
+  `id_projeto` INTEGER,
+  `titulo` VARCHAR(255),
+  `resumo` TEXT,
+  `abstract` TEXT,
+  `doi` VARCHAR(50),
+  `pasta_pdf` VARCHAR(255),
+  `tipo` varchar(10),
+  INDEX `idx_id_projeto` (`id_projeto`) 
+) ENGINE=InnoDB;
 
+CREATE TABLE `artigos_autores` (
+  `id_artigo_autor`  INTEGER AUTO_INCREMENT PRIMARY KEY,
+  `id_artigo` INTEGER,
+  `id_autor` INTEGER,
+  INDEX `idx_id_artigo` (`id_artigo`), 
+  INDEX `idx_id_autor` (`id_autor`) 
+) ENGINE=InnoDB;
 
+CREATE TABLE `resultados` (
+  `id_resultado`  INTEGER AUTO_INCREMENT PRIMARY KEY,
+  `id_ponto` INTEGER,
+  `id_campanha` INTEGER,
+  `id_wp` INTEGER,
+  `res_quimico` VARCHAR(30),
+  `nome_amostra` VARCHAR(30),
+  `data` DATE,
+  `parametro` VARCHAR(30),
+  `simbolo` VARCHAR(20),
+  `unidade` VARCHAR(10),
+  `controle` VARCHAR(1),
+  `resultado` FLOAT,
+  `erro` FLOAT,
+  `lab` VARCHAR(30),
+  `obs` TEXT,
+  `prof_inicial_solo` FLOAT,
+  `prof_final_solo` FLOAT,
+  INDEX `idx_id_wp` (`id_wp`), 
+  INDEX `idx_id_campanha` (`id_campanha`), 
+  INDEX `idx_id_ponto` (`id_ponto`)  
+) ENGINE=InnoDB;
 
-CREATE TABLE `Campanhas` (
-  `id_Campanha` integer AUTO_INCREMENT PRIMARY KEY,
-  `id_WP` integer,
-  `cod_Campanha` varchar(20),
-  `data_inicio` date,
-  `data_fim` date,
-  `tipo_Campanha` varchar(50),
-  `Obs` text
-);
+CREATE TABLE `campanha` (
+  `id_campanha`  INTEGER AUTO_INCREMENT PRIMARY KEY,
+  `id_wp` INTEGER,
+  `cod_campanha` VARCHAR(20),
+  `data_inicio` DATE,
+  `data_fim` DATE,
+  `tipo_campanha` VARCHAR(30),
+  `obs` TEXT,
+  INDEX `idx_id_wp` (`id_wp`)  
+) ENGINE=InnoDB;
 
-CREATE TABLE `pontos_monitorados` (
-  `id_ponto` integer AUTO_INCREMENT PRIMARY KEY ,
-  `cod_ponto` varchar(20),
-  `id_WP` integer,
-  `tipo_amostra` varchar(30),
-  `coord_x` float,
-  `coord_y` float,
-  `coord_z` float,
-  `latitude` decimal(18,15),
-  `longitude` decimal(18,15),
-  `profundidade` float,
-  `data_instalacao` varchar(30),
-  `tipo_estacao` varchar(30),
-  `obs` text
-);
+CREATE TABLE `pontos_monitoramento` (
+  `id_ponto`  INTEGER AUTO_INCREMENT PRIMARY KEY,
+  `codigo` VARCHAR(20),
+  `descricao` VARCHAR(30),
+  `id_wp` INTEGER,
+  `tipo_amostra` VARCHAR(30),
+  `coord_x` FLOAT,
+  `coord_y` FLOAT,
+  `coord_z` FLOAT,
+  `profundidade` FLOAT,
+  `instalacao` VARCHAR(30),
+  `tipo_estacao` VARCHAR(30),
+  `obs` TEXT,
+  INDEX `idx_id_wp` (`id_wp`) 
+) ENGINE=InnoDB;
 
-CREATE TABLE `tb_acoes` (
-  `id_acao` integer PRIMARY KEY,
-  `nome_acao` varchar(50)
-);
+ALTER TABLE `projetos_wps` ADD CONSTRAINT `fk_projetos_wps_wps` FOREIGN KEY (`id_wp`) REFERENCES `wps` (`id_wp`);
 
-CREATE TABLE `tb_mananciais` (
-  `id_manancial` integer PRIMARY KEY,
-  `id_acao` integer,
-  `nome_manancial` varchar(50)
-);
+ALTER TABLE `lista_colab` ADD CONSTRAINT `fk_id_wp_wps` FOREIGN KEY (`id_wp`) REFERENCES `wps` (`id_wp`);
 
-CREATE TABLE `tb_ativ_mananciais` (
-  `id_ativ_man` integer PRIMARY KEY,
-  `id_manancial` integer
-);
+ALTER TABLE `wps` ADD CONSTRAINT `fk_wps_colaboradores` FOREIGN KEY (`id_gerente`) REFERENCES `colaboradores` (`id_colaborador`);
 
-ALTER TABLE `artigos` ADD FOREIGN KEY (`id_Artigo`) REFERENCES `artigos_autores` (`id_artigo`);
+ALTER TABLE `arq_resultados` ADD CONSTRAINT `fk_arq_resultados_projetos_wps` FOREIGN KEY (`id_projeto`) REFERENCES `projetos_wps` (`id_projeto`);
 
-ALTER TABLE `pesquisadores` ADD FOREIGN KEY (`id_pesquisador`) REFERENCES `artigos_autores` (`id_autor`);
+ALTER TABLE `artigos` ADD CONSTRAINT `fk_artigos_projetos_wps` FOREIGN KEY (`id_projeto`) REFERENCES `projetos_wps` (`id_projeto`);
 
-ALTER TABLE `artigos` ADD FOREIGN KEY (`id_projeto`) REFERENCES `projetos_wps` (`id_projeto`);
+ALTER TABLE `artigos_autores` ADD CONSTRAINT `fk_artigos_autores_artigos` FOREIGN KEY (`id_artigo`) REFERENCES `artigos` (`id_Artigo`);
 
-ALTER TABLE `wps` ADD FOREIGN KEY (`id_gerente`) REFERENCES `pesquisadores` (`id_pesquisador`);
+ALTER TABLE `artigos_autores` ADD CONSTRAINT `fk_artigos_autores_colaboradores` FOREIGN KEY (`id_autor`) REFERENCES `colaboradores` (`id_colaborador`);
 
-ALTER TABLE `colaboradores` ADD FOREIGN KEY (`id_colaboradores`) REFERENCES `wps` (`id_colaboradores`);
+ALTER TABLE `lista_colab` ADD CONSTRAINT `fk_lista_colab_colaboradores` FOREIGN KEY (`id_colaborador`) REFERENCES `colaboradores` (`id_colaborador`);
 
-ALTER TABLE `colaboradores` ADD FOREIGN KEY (`id_autor`) REFERENCES `pesquisadores` (`id_pesquisador`);
+ALTER TABLE `resultados` ADD CONSTRAINT `fk_resultados_wps` FOREIGN KEY (`id_wp`) REFERENCES `wps` (`id_wp`);
 
-ALTER TABLE `projetos_wps` ADD FOREIGN KEY (`id_wp`) REFERENCES `wps` (`id_wp`);
+ALTER TABLE `resultados` ADD CONSTRAINT `fk_resultados_campanha` FOREIGN KEY (`id_campanha`) REFERENCES `campanha` (`id_campanha`);
 
-ALTER TABLE `projetos_wps` ADD FOREIGN KEY (`id_autor`) REFERENCES `pesquisadores` (`id_pesquisador`);
+ALTER TABLE `resultados` ADD CONSTRAINT `fk_resultados_pontos_monitoramento` FOREIGN KEY (`id_ponto`) REFERENCES `pontos_monitoramento` (`id_ponto`);
 
-ALTER TABLE `arq_resultados` ADD FOREIGN KEY (`id_projeto`) REFERENCES `projetos_wps` (`id_projeto`);
+ALTER TABLE `campanha` ADD CONSTRAINT `fk_campanha_wps` FOREIGN KEY (`id_wp`) REFERENCES `wps` (`id_wp`);
 
-ALTER TABLE `resultados_quim` ADD FOREIGN KEY (`id_WP`) REFERENCES `wps` (`wp`);
-
-ALTER TABLE `resultados_quim` ADD FOREIGN KEY (`id_Campanha`) REFERENCES `Campanha` (`id_Campanha`);
-
-ALTER TABLE `resultados_quim` ADD FOREIGN KEY (`id_ponto`) REFERENCES `pontos_monitorados` (`id_Ponto`);
-
-ALTER TABLE `tb_mananciais` ADD FOREIGN KEY (`id_manancial`) REFERENCES `tb_ativ_mananciais` (`id_manancial`);
-
-ALTER TABLE `tb_acoes` ADD FOREIGN KEY (`id_acao`) REFERENCES `tb_mananciais` (`id_acao`);
+ALTER TABLE `pontos_monitoramento` ADD CONSTRAINT `fk_pontos_monitoramento_wps` FOREIGN KEY (`id_wp`) REFERENCES `wps` (`id_wp`);
