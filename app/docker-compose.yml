@@ -24,4 +24,5 @@ services:
 
 networks:
   sacre:
-    driver: bridge
+    name: sacre
+    external: true
