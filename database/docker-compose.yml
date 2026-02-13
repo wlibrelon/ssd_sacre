@@ -6,14 +6,12 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=dbssd@#
       - MYSQL_DATABASE=ssd_db
-      - MYSQL_USER=root
       - MYSQL_PASSWORD=dbssd@#
       - TZ=America/Sao_Paulo
     ports:
       - '3306:3306'
     volumes:
-      - /opt/PCISDE/mysqldb:/var/lib/mysql
-      - ./MYSQL_INIT:/init-db
+      - ./init-db:/docker-entrypoint-initdb.d
     networks:
       - sacre
     healthcheck:
@@ -25,3 +23,4 @@ services:
 networks:
   sacre:
     driver: bridge
+ 
