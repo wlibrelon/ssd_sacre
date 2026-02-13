@@ -1,0 +1,27 @@
+version: '3.8'
+ 
+services:
+  sacre-app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: sacre.app
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DB_HOST=sacre-db
+      - DB_USER=root
+      - DB_PASSWORD=dbssd@#
+      - DB_NAME=ssd_db
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    networks:
+      - sacre
+
+networks:
+  sacre:
+    driver: bridge

@@ -2,204 +2,123 @@ import mysql.connector
 import streamlit as st
 import os
 import base64
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 from funcoes_app import exibir_pdf_no_app, conectar_banco
 
+
 def show():
-    PASTA_PDFS = "artigos"  
+    PASTA_PDFS = "pdfs_artigos"  
 
     if not os.path.exists(PASTA_PDFS):
         os.makedirs(PASTA_PDFS)
 
-    def inserir_artigo(titulo, resumo, abstract, doi, pasta_pdf):
-        conn = conectar_banco()
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO artigos (titulo, resumo, abstract, doi, pasta_pdf) VALUES (%s, %s, %s, %s, %s)", (titulo, resumo, abstract, doi, pasta_pdf))
-        conn.commit()
-        conn.close()
-
-    def buscar_artigos():
+    def buscar_artigos_por_tipo(tipo):
+        """Busca artigos filtrados por tipo"""
         conn = conectar_banco()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT id_artigo, titulo, resumo, abstract, doi,  pasta_pdf FROM artigos")
+        cursor.execute(
+            "SELECT id_Artigo, Titulo, Resumo, Abstract, doi, Pasta_PDF, Tipo FROM artigos WHERE Tipo = %s ORDER BY id_Artigo DESC",
+            (tipo,)
+        )
         artigos = cursor.fetchall()
         conn.close()
         return artigos
 
-    def exibir_tabela_com_resumo_e_pdf():
-        artigos = buscar_artigos()
+    def exibir_tabela_com_resumo_e_pdf(tipo_filtro):
+        """Exibe tabela de artigos filtrados por tipo"""
+        artigos = buscar_artigos_por_tipo(tipo_filtro)
 
         if not artigos:
-            st.warning("Nenhum artigo encontrado no banco de dados.")
+            st.warning(f"Nenhum artigo do tipo '{tipo_filtro}' encontrado no banco de dados.")
             return
 
         margem, col1, col2, col3 = st.columns([0.05, 1, 1, 1])
 
         with col1:
-            st.subheader("Artigos Publicados")
+            st.subheader(f"Artigos - {tipo_filtro}")
             for idx, artigo in enumerate(artigos):
-                st.write(f"**{artigo['id_artigo']} - {artigo['titulo']}**")
+                st.write(f"**{artigo['id_Artigo']} - {artigo['Titulo']}**")
 
-                col_res, col_doi = st.columns([2,4])
+                col_res, col_pdf, col_doi = st.columns([1.5, 1.5, 2])
 
                 with col_res:
-                    if st.button("Resumo", key=f"resumo_{artigo['id_artigo']}"):
+                    if st.button("Resumo", key=f"resumo_{artigo['id_Artigo']}"):
                         st.session_state['artigo_selecionado'] = artigo
+
+                with col_pdf:
+                    if st.button("📄 Exibir", key=f"exibir_{artigo['id_Artigo']}"):
+                        st.session_state['artigo_selecionado'] = artigo
+                        st.session_state['exibir_pdf'] = True
+
                 with col_doi:
                     if artigo.get("doi"):
                         st.markdown(
-                            f"""<a href="{artigo['doi']}" target="_blank" style="color: #1f77b4; text-decoration: none;">
+                            f"""<a href="https://doi.org/{artigo['doi']}" target="_blank" style="color: #1f77b4; text-decoration: none;">
                             🔗 Acessar DOI</a>""",
                             unsafe_allow_html=True
                         )
+                
                 if idx < len(artigos) - 1:
-                    st.markdown("""<hr style="margin-top: 3px; margin-bottom: 2px;">""",unsafe_allow_html=True)
+                    st.markdown("""<hr style="margin-top: 3px; margin-bottom: 2px;">""", unsafe_allow_html=True)
 
-        # Coluna 2: Exibição do Resumo inglês
+        # Coluna 2: Exibição do Abstract (inglês)
         with col2:
             st.subheader("Abstract")
             artigo_selecionado = st.session_state.get('artigo_selecionado')
 
             if artigo_selecionado:
-                st.text_area("", artigo_selecionado["abstract"], height=400, disabled=True)
+                st.text_area("", artigo_selecionado["Abstract"], height=400, disabled=True, key="abstract_display")
+            else:
+                st.info("Selecione um artigo para ver o abstract")
 
-        # Coluna 3: Exibição do Resumo portuguÊs
+        # Coluna 3: Exibição do Resumo (português)
         with col3:
             st.subheader("Resumo")
             artigo_selecionado = st.session_state.get('artigo_selecionado')
 
             if artigo_selecionado:
-                st.text_area("", artigo_selecionado["resumo"], height=400, disabled=True)
+                st.text_area("", artigo_selecionado["Resumo"], height=400, disabled=True, key="resumo_display")
+            else:
+                st.info("Selecione um artigo para ver o resumo")
 
-        st.markdown("""<hr style="margin-top: 3px; margin-bottom: 2px;">""",unsafe_allow_html=True)
+        st.markdown("""<hr style="margin-top: 3px; margin-bottom: 2px;">""", unsafe_allow_html=True)
 
-        if st.session_state.get('modo_edicao', False) and artigo_selecionado:
+        # Exibir PDF se solicitado
+        artigo_selecionado = st.session_state.get('artigo_selecionado')
+        if st.session_state.get('exibir_pdf', False) and artigo_selecionado:
             st.markdown("---")
-            st.subheader("Editar Artigo Selecionado")
+            st.subheader(f"📄 {artigo_selecionado['Titulo']}")
+            caminho_pdf = artigo_selecionado["Pasta_PDF"]
+            if os.path.exists(caminho_pdf):
+                exibir_pdf_no_app(caminho_pdf)
+            else:
+                st.error(f"Arquivo PDF não encontrado: {caminho_pdf}")
 
-            novo_titulo = st.text_input("Título do Artigo", value=artigo_selecionado['titulo'])
-            novo_resumo = st.text_area("Resumo", value=artigo_selecionado['resumo'])
-            novo_abstract = st.text_area("Abstract", value=artigo_selecionado['abstract'])
-            novo_doi = st.text_input("DOI", value=artigo_selecionado['doi'])
-
-            if st.button("Salvar Alterações"):
-                conn = conectar_banco()
-                cursor = conn.cursor()
-                cursor.execute("""
-                    UPDATE artigos 
-                    SET titulo = %s, resumo = %s, abstract = %s, doi = %s 
-                    WHERE id_artigo = %s
-                """, (novo_titulo, novo_resumo, novo_abstract, novo_doi, artigo_selecionado['id_artigo']))
-                conn.commit()
-                conn.close()
-                st.success("Artigo atualizado com sucesso!")
-                st.session_state['modo_edicao'] = False
-
-
-    st.sidebar.title("Gerenciamento de Artigos e Autores")
-
-    if 'menu' not in st.session_state:
-        st.session_state['menu'] = 'Artigos Publicados'
-    if 'modo_edicao' not in st.session_state:
-        st.session_state['modo_edicao'] = False
+    # Inicializar session_state
+    if 'tipo_selecionado' not in st.session_state:
+        st.session_state['tipo_selecionado'] = 'SACRE'
     if 'artigo_selecionado' not in st.session_state:
         st.session_state['artigo_selecionado'] = None
+    if 'exibir_pdf' not in st.session_state:
+        st.session_state['exibir_pdf'] = False
 
+    # Sidebar com botões um abaixo do outro
+    st.sidebar.title("Filtrar Artigos")
+    
+    if st.sidebar.button("📚 Artigos SACRE", key="btn_sacre", use_container_width=True):
+        st.session_state['tipo_selecionado'] = 'SACRE'
+        st.session_state['artigo_selecionado'] = None
+        st.session_state['exibir_pdf'] = False
+        st.rerun()
+    
+    if st.sidebar.button("📖 Artigos de Referência", key="btn_referencia", use_container_width=True):
+        st.session_state['tipo_selecionado'] = 'Referência'
+        st.session_state['artigo_selecionado'] = None
+        st.session_state['exibir_pdf'] = False
+        st.rerun()
 
-    if st.sidebar.button("Artigos Publicados"):
-        st.session_state['menu'] = "Artigos Publicados"
-        st.session_state['modo_edicao'] = False
+    # Título principal
+    st.title("Artigos e Publicações")
 
-    if st.sidebar.button("Inserir Artigos"):
-        st.session_state['menu'] = "Inserir Artigos"
-        st.session_state['modo_edicao'] = False
-
-    if st.sidebar.button("Inserir Autores"):
-        st.session_state['menu'] = "Inserir Autores"
-        st.session_state['modo_edicao'] = False
-
-    if st.sidebar.button("Relacionar Artigos e Autores"):
-        st.session_state['menu'] = "Relacionar Artigos e Autores"
-        st.session_state['modo_edicao'] = False
-
-    # Se um artigo estiver selecionado, mostrar opções adicionais
-    if st.session_state['artigo_selecionado']:
-        st.sidebar.markdown("""<hr style="margin-top: 3px; margin-bottom: 2px;">""",unsafe_allow_html=True)
-        
-        if st.sidebar.button("Exibir Artigo"):
-            artigo_selecionado = st.session_state.get('artigo_selecionado')
-            st.session_state['menu'] = "Exibir Artigo"
-            caminho_pdf = artigo_selecionado["pasta_pdf"]
-            st.subheader(f"{artigo_selecionado['titulo']}")
-            exibir_pdf_no_app(caminho_pdf)
-        
-        if st.sidebar.button("Editar Artigo"):
-            st.session_state['modo_edicao'] = True
-            st.session_state['menu'] = "Artigos Publicados"
-
-    menu = st.session_state['menu']
-
-
-################################
-    # Artigos Publicados (exibe por padrão ao abrir o app)
-    if menu == "Artigos Publicados":
-        exibir_tabela_com_resumo_e_pdf()
-
-    elif menu == "Inserir Artigos":
-        st.header("Inserir um Novo Artigo")
-        titulo = st.text_input("Título do Artigo")
-        resumo = st.text_area("Resumo")
-        abstract = st.text_area("abstract")
-        doi = st.text("doi")
-        arquivo_pdf = st.file_uploader("Upload do Arquivo PDF", type=["pdf"])
-
-        if st.button("Salvar Artigo"):
-            if titulo and arquivo_pdf:
-                caminho_pdf = os.path.join(PASTA_PDFS, arquivo_pdf.name)
-                with open(caminho_pdf, "wb") as f:
-                    f.write(arquivo_pdf.read())
-                
-                inserir_artigo(titulo, resumo, abstract, doi, caminho_pdf)
-                st.success("Artigo inserido com sucesso!")
-            else:
-                st.error("Título e o arquivo PDF são obrigatórios.")
-
-    elif menu == "Inserir Autores":
-        st.header("Inserir um Novo Autor")
-        nome = st.text_input("Nome do Autor")
-        link_internet = st.text_input("Link (ex: LinkedIn, Lattes, etc.)")
-
-        if st.button("Salvar Autor"):
-            if nome:
-                conn = conectar_banco()
-                cursor = conn.cursor()
-                cursor.execute("INSERT INTO pesquisadores (nome, link_internet) VALUES (%s, %s)", (nome, link_internet))
-                conn.commit()
-                conn.close()
-                st.success("Pesquisador inserido com sucesso!")
-            else:
-                st.error("O nome do pesquisador é obrigatório.")
-
-    elif menu == "Relacionar Artigos e Autores":
-        st.header("Relacionar Artigo a Autor")
-
-        conn = conectar_banco()
-        cursor = conn.cursor()
-        cursor.execute("SELECT id_artigo, titulo FROM artigos")
-        artigos = cursor.fetchall()
-
-        cursor.execute("SELECT id_pesquisador, nome FROM pesquisadores")
-        autores = cursor.fetchall()
-        conn.close()
-
-        artigo_escolhido = st.selectbox("Selecione o Artigo", artigos, format_func=lambda x: f"{x[0]} - {x[1]}")
-        autor_escolhido = st.selectbox("Selecione o Autor", autores, format_func=lambda x: f"{x[0]} - {x[1]}")
-
-        if st.button("Relacionar"):
-            if artigo_escolhido and autor_escolhido:
-                conn = conectar_banco()
-                cursor = conn.cursor()
-                cursor.execute("INSERT INTO artigos_autores (id_artigo, id_autor) VALUES (%s, %s)", (artigo_escolhido[0], autor_escolhido[0]))
-                conn.commit()
-                conn.close()
-                st.success("Relacionamento criado com sucesso!")
+    # Exibir artigos filtrados
+    exibir_tabela_com_resumo_e_pdf(st.session_state['tipo_selecionado'])
