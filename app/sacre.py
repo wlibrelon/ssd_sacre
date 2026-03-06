@@ -50,10 +50,10 @@ if selected == "SACRE":
 
 elif selected == "SSD":
     st.sidebar.title("Opções SSD")
-    if st.sidebar.button("Otimização"):  
-        ssd_gerenc.show()
-    if st.sidebar.button("Resultados Dinâmicos"):
-        dashboard_quim.show()
+    # if st.sidebar.button("Otimização"):  
+    #     ssd_gerenc.show()
+    # if st.sidebar.button("Resultados Dinâmicos"):
+    #     dashboard_quim.show()
 
 elif selected == "Resultados":
     result_wps.show()
