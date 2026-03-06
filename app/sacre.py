@@ -61,5 +61,5 @@ elif selected == "Resultados":
 elif selected == "Publicação":
     publica.show()
 
-elif selected == "Gestão":
+elif selected == "Gestão de dados":
     gestao_ssd2.show()
