@@ -33,7 +33,7 @@ with col2:
 # Menu principal
 selected = option_menu(
     menu_title=None, 
-    options=["SACRE", "SSD", "Resultados", "Publicação", "Gestão"],
+    options=["SACRE", "SSD", "Resultados", "Publicação", "Gestão de dados"],
     orientation="horizontal",
     styles={
         "container": {"padding": "0!important", "background-color": "#0CBFDD"},
